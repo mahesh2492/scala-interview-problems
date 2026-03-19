@@ -9,6 +9,7 @@ sealed abstract class RList[+T] {
   //Changed prepend name to :: to make it right associative
   // RNil.::(2) == 2 :: RNil
   def ::[S >: T](elem: S): RList[S] = new ::(elem, this)
+  def apply(index: Int): T
 }
 
 case object RNil extends RList[Nothing] {
@@ -16,6 +17,8 @@ case object RNil extends RList[Nothing] {
   override def tail: RList[Nothing] = throw new NoSuchElementException
   override def isEmpty: Boolean = true
   override def toString: String = "[]"
+
+  override def apply(index: Int): Nothing = throw new NoSuchElementException()
 }
 
 //Renamed Cons to :: as scala original collection
@@ -32,9 +35,19 @@ case class ::[+T](override val head: T, override val tail: RList[T]) extends RLi
     "["  + toStringTailRec(this, "") + "]"
   }
 
+  override def apply(index: Int): T = {
+     @tailrec
+     def applyTailRec(remaining: RList[T], currentIndex: Int): T = {
+        if(index == currentIndex) remaining.head
+        else applyTailRec(remaining.tail, currentIndex + 1)
+     }
+
+     if(index < 0) throw new NoSuchElementException
+     else applyTailRec(this, 0)
+  }
 }
 
 object ListProblem extends App {
-  val aSmallList =  1 :: 2 :: 3 :: RNil // RNil.::(3).::(2).::(1)
-  println(aSmallList)
+  val aSmallList =  1 :: 2 :: 3 :: 4 :: 5 :: RNil // RNil.::(5).::(4).::(3).::(2).::(1)
+  println(aSmallList(3))
 }
