@@ -17,6 +17,7 @@ sealed abstract class RList[+T] {
   def apply(index: Int): T
 
   def length: Int
+  def reverse: RList[T]
 }
 
 case object RNil extends RList[Nothing] {
@@ -28,6 +29,8 @@ case object RNil extends RList[Nothing] {
   override def apply(index: Int): Nothing = throw new NoSuchElementException()
 
   override def length: Int = 0
+
+  override def reverse: RList[Nothing] = RNil
 }
 
 //Renamed Cons to :: as scala original collection
@@ -71,14 +74,43 @@ case class ::[+T](override val head: T, override val tail: RList[T]) extends RLi
 
     lengthTailRec(this, 0)
   }
+
+  override def reverse: RList[T] = {
+    @tailrec
+    def reverseTailRec(remainingList: RList[T], result: RList[T]): RList[T] = {
+      remainingList match {
+        case RNil => result
+        case ::(head, tail) => reverseTailRec(tail, head :: result)
+      }
+    }
+    reverseTailRec(this, RNil)
+  }
 }
 
+object RList {
+  def from[T](iterable: Iterable[T]): RList[T] = {
+    @tailrec
+    def convertToRListTailRec(remaining: Iterable[T], acc: RList[T]): RList[T] = {
+        if(remaining.isEmpty) acc
+        else convertToRListTailRec(remaining.tail, remaining.head :: acc)
+    }
+    convertToRListTailRec(iterable, RNil).reverse
+  }
+}
 object ListProblem extends App {
   val aSmallList =  1 :: 2 :: 3 :: 4 :: 5 :: RNil // RNil.::(5).::(4).::(3).::(2).::(1)
+  val aLargeList = RList.from(1 to 10000)
   //test l-th
-  println(aSmallList(1))
-  println(aSmallList(3))
+  println(aSmallList.apply(1))
+  println(aSmallList.apply(3))
+  println(aLargeList.apply(8345))
 
   //test length
   println(aSmallList.length)
+  println(aLargeList.length)
+
+  //test reverse
+  println(aSmallList.reverse)
+  println(aLargeList.reverse)
+
 }
