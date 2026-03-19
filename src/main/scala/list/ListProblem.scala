@@ -3,13 +3,20 @@ package list
 import scala.annotation.tailrec
 
 sealed abstract class RList[+T] {
+  /**
+   * standard functions
+   * @return
+   */
   def head:T
   def tail: RList[T]
   def isEmpty: Boolean
   //Changed prepend name to :: to make it right associative
   // RNil.::(2) == 2 :: RNil
   def ::[S >: T](elem: S): RList[S] = new ::(elem, this)
+
   def apply(index: Int): T
+
+  def length: Int
 }
 
 case object RNil extends RList[Nothing] {
@@ -19,6 +26,8 @@ case object RNil extends RList[Nothing] {
   override def toString: String = "[]"
 
   override def apply(index: Int): Nothing = throw new NoSuchElementException()
+
+  override def length: Int = 0
 }
 
 //Renamed Cons to :: as scala original collection
@@ -35,6 +44,10 @@ case class ::[+T](override val head: T, override val tail: RList[T]) extends RLi
     "["  + toStringTailRec(this, "") + "]"
   }
 
+  /**
+   * Easy problems
+   */
+  // get element at a given index
   override def apply(index: Int): T = {
      @tailrec
      def applyTailRec(remaining: RList[T], currentIndex: Int): T = {
@@ -45,9 +58,27 @@ case class ::[+T](override val head: T, override val tail: RList[T]) extends RLi
      if(index < 0) throw new NoSuchElementException
      else applyTailRec(this, 0)
   }
+
+  //size of the list
+  override def length: Int = {
+      @tailrec
+      def lengthTailRec(remaining: RList[T], len: Int): Int = {
+        remaining match {
+          case RNil => len
+          case ::(_, tail) => lengthTailRec(tail, len + 1)
+        }
+      }
+
+    lengthTailRec(this, 0)
+  }
 }
 
 object ListProblem extends App {
   val aSmallList =  1 :: 2 :: 3 :: 4 :: 5 :: RNil // RNil.::(5).::(4).::(3).::(2).::(1)
+  //test l-th
+  println(aSmallList(1))
   println(aSmallList(3))
+
+  //test length
+  println(aSmallList.length)
 }
