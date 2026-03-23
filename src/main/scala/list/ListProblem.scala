@@ -22,6 +22,9 @@ sealed abstract class RList[+T] {
 
   //concatenate another list to this one
   def ++[S >: T](anotherList: RList[S]): RList[S]
+
+  // remove an element at a given index and return a new list
+  def removeAt(index: Int): RList[T]
 }
 
 case object RNil extends RList[Nothing] {
@@ -37,6 +40,8 @@ case object RNil extends RList[Nothing] {
   override def reverse: RList[Nothing] = RNil
 
   override def ++[S >: Nothing](anotherList: RList[S]): RList[S] = anotherList
+
+  override def removeAt(index: Int): RList[Nothing] = RNil
 }
 
 //Renamed Cons to :: as scala original collection
@@ -103,6 +108,22 @@ case class ::[+T](override val head: T, override val tail: RList[T]) extends RLi
     }
     append(anotherList, this.reverse).reverse
   }
+
+  override def removeAt(index: Int): RList[T] = {
+    @tailrec
+    def removeTailRec(remainingList: RList[T], currentIndex: Int, acc: RList[T]): RList[T] = {
+      remainingList match {
+        case RNil => acc.reverse
+        case ::(head, tail) =>
+          if(currentIndex == index) {
+            acc.reverse ++ tail
+          } else {
+            removeTailRec(tail, currentIndex + 1, head :: acc)
+          }
+      }
+    }
+    removeTailRec(this, 0, RNil)
+  }
 }
 
 object RList {
@@ -133,6 +154,9 @@ object ListProblem extends App {
 
   val anotherSmallList = 4 :: 5 :: 6 :: RNil
 
-  println(aSmallList ++ anotherSmallList)
+  val mediumList: RList[Int] = aSmallList ++ anotherSmallList
+  println(mediumList)
+
+  println(aLargeList.removeAt(13))
 
 }
