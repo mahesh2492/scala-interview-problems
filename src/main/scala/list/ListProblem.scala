@@ -25,6 +25,17 @@ sealed abstract class RList[+T] {
 
   // remove an element at a given index and return a new list
   def removeAt(index: Int): RList[T]
+
+  def map[S](f: T => S): RList[S]
+  def flatMap[S](f: T => RList[S]): RList[S]
+  def filter(f: T => Boolean): RList[T]
+
+  /**
+   *
+     Medium problems
+   */
+  //run-length encoding
+  def rle: RList[(T, Int)]
 }
 
 case object RNil extends RList[Nothing] {
@@ -42,6 +53,18 @@ case object RNil extends RList[Nothing] {
   override def ++[S >: Nothing](anotherList: RList[S]): RList[S] = anotherList
 
   override def removeAt(index: Int): RList[Nothing] = RNil
+
+  override def map[S](f: Nothing => S): RList[S] = RNil
+
+  override def flatMap[S](f: Nothing => RList[S]): RList[S] = RNil
+
+  override def filter(f: Nothing => Boolean): RList[Nothing] = RNil
+
+  /**
+   *
+   *  Medium problems
+   */
+  override def rle: RList[(Nothing, Int)] = RNil
 }
 
 //Renamed Cons to :: as scala original collection
@@ -124,6 +147,58 @@ case class ::[+T](override val head: T, override val tail: RList[T]) extends RLi
     }
     removeTailRec(this, 0, RNil)
   }
+
+  override def map[S](f: T => S): RList[S] = {
+    @tailrec
+    def mapTailRec(remainingList: RList[T], acc: RList[S]): RList[S] = {
+      remainingList match {
+        case RNil => acc
+        case ::(head, tail) => mapTailRec(tail, f(head) :: acc)
+      }
+    }
+    mapTailRec(this, RNil).reverse
+  }
+
+
+  override def flatMap[S](f: T => RList[S]): RList[S] = {
+    @tailrec
+    def flatMapTailRec(remainingList: RList[T], acc: RList[S]): RList[S] = {
+      remainingList match {
+        case RNil => acc
+        case ::(head, tail) => flatMapTailRec(tail, f(head))
+      }
+    }
+    flatMapTailRec(this, RNil)
+
+  }
+
+  override def filter(f: T => Boolean): RList[T] = {
+    @tailrec
+    def filterTailRec(remainingList: RList[T], acc: RList[T]): RList[T] = {
+      remainingList match {
+        case RNil => acc
+        case ::(head, tail) if f(head) => filterTailRec(tail, head :: acc)
+        case ::(head, tail) if !f(head) => filterTailRec(tail, acc)
+      }
+    }
+    filterTailRec(this, RNil).reverse
+  }
+
+  /**
+   *
+   *  Medium problems
+   */
+  override def rle: RList[(T, Int)] = {
+    @tailrec
+    def rleTailRec(remaining: RList[T], acc: RList[(T, Int)], counter: Int): RList[(T, Int)] = {
+      remaining match {
+        case RNil => acc
+        case ::(head, tail) if tail.isEmpty || head != tail.head  => rleTailRec(tail, (head, counter + 1) :: acc, 0)
+        case ::(head, tail) if head == tail.head => rleTailRec(tail, acc, counter + 1)
+      }
+    }
+    rleTailRec(this, RNil, 0).reverse
+  }
 }
 
 object RList {
@@ -137,7 +212,7 @@ object RList {
   }
 }
 object ListProblem extends App {
-  val aSmallList =  1 :: 2 :: 3 :: RNil // RNil.::(3).::(2).::(1)
+  val aSmallList = 1 :: 2 :: 3 :: RNil // RNil.::(3).::(2).::(1)
   val aLargeList = RList.from(1 to 10000)
   //test l-th
   println(aSmallList.apply(1))
@@ -158,5 +233,17 @@ object ListProblem extends App {
   println(mediumList)
 
   println(aLargeList.removeAt(13))
+
+  //map
+  println(aSmallList.map(_ * 5))
+
+  //flatmap
+  println(aLargeList.flatMap(x => x :: (2 * x) :: RNil))
+  //filter
+  println(aLargeList.filter(_ % 2 != 0))
+
+  val duplicateList = 1 :: 1 :: 1 :: 1 :: 2 :: 3 :: 3 :: 4 :: 4 :: RNil
+  println(duplicateList)
+  println(duplicateList.rle)
 
 }
