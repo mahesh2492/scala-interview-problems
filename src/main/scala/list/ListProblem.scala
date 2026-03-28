@@ -39,6 +39,9 @@ sealed abstract class RList[+T] {
 
   // duplicate each element a number of times in a row
   def duplicateEach(k: Int):RList[T]
+
+  // rotation by a number of position to the left
+  def rotate(k: Int): RList[T]
 }
 
 case object RNil extends RList[Nothing] {
@@ -70,6 +73,8 @@ case object RNil extends RList[Nothing] {
   override def rle: RList[(Nothing, Int)] = RNil
 
   override def duplicateEach(k: Int): RList[Nothing] = RNil
+
+  override def rotate(k: Int): RList[Nothing] = RNil
 }
 
 //Renamed Cons to :: as scala original collection
@@ -216,6 +221,25 @@ case class ::[+T](override val head: T, override val tail: RList[T]) extends RLi
     }
     duplicateEachTailRec(this, RNil, 1).reverse
   }
+
+  override def rotate(k: Int): RList[T] = {
+    /** 1 2 3.rotate(4) = rotateTailRec([1, 2, 3], 0, RNil)
+        rotateTailRec([2, 3], 1, 1:: RNil)
+        rotateTailRec([3], 2, 2 :: 1:: RNil)
+        rotateTailRec([],  2, 2 :: 1:: RNil)
+       Complexity: O(Max(N, K))
+     **/
+    @tailrec
+    def rotateTailRec(remaining: RList[T], howManyTimesRotated: Int, acc: RList[T]): RList[T] = {
+      remaining match {
+        case RNil if howManyTimesRotated != k  => rotateTailRec(this, howManyTimesRotated, RNil)
+        case RNil if howManyTimesRotated == k  => acc.reverse
+        case ::(head, tail) if howManyTimesRotated == k => head :: tail ++ acc.reverse
+        case ::(head, tail) if howManyTimesRotated < k => rotateTailRec(tail, howManyTimesRotated + 1, head :: acc) // 2, 1
+      }
+    }
+    rotateTailRec(this, 0, RNil)
+  }
 }
 
 object RList {
@@ -228,41 +252,53 @@ object RList {
     convertToRListTailRec(iterable, RNil).reverse
   }
 }
+
 object ListProblem extends App {
   val aSmallList = 1 :: 2 :: 3 :: RNil // RNil.::(3).::(2).::(1)
-  val aLargeList = RList.from(1 to 10000)
-  //test l-th
-  println(aSmallList.apply(1))
-  println(aSmallList.apply(2))
-  println(aLargeList.apply(8345))
-
-  //test length
-  println(aSmallList.length)
-  println(aLargeList.length)
-
-  //test reverse
-  println(aSmallList.reverse)
-  println(aLargeList.reverse)
-
   val anotherSmallList = 4 :: 5 :: 6 :: RNil
-
   val mediumList: RList[Int] = aSmallList ++ anotherSmallList
-  println(mediumList)
 
-  println(aLargeList.removeAt(13))
+  val oneToTen = RList.from(1 to 10)
+  def testEasyProblem(): Unit = {
+    val aLargeList = RList.from(1 to 10000)
+    //test l-th
+    println(aSmallList.apply(1))
+    println(aSmallList.apply(2))
+    println(aLargeList.apply(8345))
 
-  //map
-  println(aSmallList.map(_ * 5))
+    //test length
+    println(aSmallList.length)
+    println(aLargeList.length)
 
-  //flatmap
-  println(aLargeList.flatMap(x => x :: (2 * x) :: RNil))
-  //filter
-  println(aLargeList.filter(_ % 2 != 0))
+    //test reverse
+    println(aSmallList.reverse)
+    println(aLargeList.reverse)
 
-  val duplicateList = 1 :: 1 :: 1 :: 1 :: 2 :: 3 :: 3 :: 4 :: 4 :: RNil
-  println(duplicateList)
-  println(duplicateList.rle)
+    val anotherSmallList = 4 :: 5 :: 6 :: RNil
 
-  println(aSmallList.duplicateEach(2))
+    val mediumList: RList[Int] = aSmallList ++ anotherSmallList
+    println(mediumList)
 
+    println(aLargeList.removeAt(13))
+
+    //map
+    println(aSmallList.map(_ * 5))
+
+    //flatmap
+    println(aLargeList.flatMap(x => x :: (2 * x) :: RNil))
+    //filter
+    println(aLargeList.filter(_ % 2 != 0))
+  }
+  def testMediumDifficultyProblem(): Unit = {
+    val duplicateList = 1 :: 1 :: 1 :: 1 :: 2 :: 3 :: 3 :: 4 :: 4 :: RNil
+
+    println(duplicateList.rle)
+
+    println(aSmallList.duplicateEach(2))
+    for {
+      i <- 1 to 10
+    } println(oneToTen.rotate(i))
+  }
+
+  testMediumDifficultyProblem()
 }
