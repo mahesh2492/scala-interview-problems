@@ -1,6 +1,7 @@
 package list
 
 import scala.annotation.tailrec
+import scala.util.Random
 
 sealed abstract class RList[+T] {
   /**
@@ -42,6 +43,9 @@ sealed abstract class RList[+T] {
 
   // rotation by a number of position to the left
   def rotate(k: Int): RList[T]
+
+  // random sample
+  def sample(k: Int): RList[T]
 }
 
 case object RNil extends RList[Nothing] {
@@ -75,6 +79,8 @@ case object RNil extends RList[Nothing] {
   override def duplicateEach(k: Int): RList[Nothing] = RNil
 
   override def rotate(k: Int): RList[Nothing] = RNil
+
+  override def sample(k: Int): RList[Nothing] = RNil
 }
 
 //Renamed Cons to :: as scala original collection
@@ -240,6 +246,30 @@ case class ::[+T](override val head: T, override val tail: RList[T]) extends RLi
     }
     rotateTailRec(this, 0, RNil)
   }
+
+  /*
+      Complexity - O(N * K)
+   */
+  override def sample(k: Int): RList[T] = {
+    @tailrec
+    def sampleTailRec(acc: RList[T], count: Int): RList[T] = {
+      if(count == k) {
+        acc
+      } else {
+        val random = Random.nextInt(this.length)
+        sampleTailRec(this.apply(random) :: acc, count + 1)
+      }
+    }
+
+    if(k < 0) RNil
+    else sampleTailRec(RNil, 0)
+  }
+
+  /*
+      Complexity - O(N * K)
+   */
+  def sampleElegant(k: Int): RList[T] =
+    RList.from((1 to k).map(_ => Random.nextInt(this.length)).map(index => this.apply(index)))
 }
 
 object RList {
@@ -258,9 +288,9 @@ object ListProblem extends App {
   val anotherSmallList = 4 :: 5 :: 6 :: RNil
   val mediumList: RList[Int] = aSmallList ++ anotherSmallList
 
+  val aLargeList = RList.from(1 to 10000)
   val oneToTen = RList.from(1 to 10)
   def testEasyProblem(): Unit = {
-    val aLargeList = RList.from(1 to 10000)
     //test l-th
     println(aSmallList.apply(1))
     println(aSmallList.apply(2))
@@ -298,6 +328,9 @@ object ListProblem extends App {
     for {
       i <- 1 to 10
     } println(oneToTen.rotate(i))
+
+    println(aLargeList.sample(15))
+
   }
 
   testMediumDifficultyProblem()
