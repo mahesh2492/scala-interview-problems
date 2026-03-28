@@ -36,6 +36,9 @@ sealed abstract class RList[+T] {
    */
   //run-length encoding
   def rle: RList[(T, Int)]
+
+  // duplicate each element a number of times in a row
+  def duplicateEach(k: Int):RList[T]
 }
 
 case object RNil extends RList[Nothing] {
@@ -65,6 +68,8 @@ case object RNil extends RList[Nothing] {
    *  Medium problems
    */
   override def rle: RList[(Nothing, Int)] = RNil
+
+  override def duplicateEach(k: Int): RList[Nothing] = RNil
 }
 
 //Renamed Cons to :: as scala original collection
@@ -199,6 +204,18 @@ case class ::[+T](override val head: T, override val tail: RList[T]) extends RLi
     }
     rleTailRec(this, RNil, 0).reverse
   }
+
+  override def duplicateEach(k: Int): RList[T] = {
+    @tailrec
+    def duplicateEachTailRec(remaining: RList[T], acc: RList[T], occurrence: Int): RList[T] = {
+      remaining match {
+        case RNil => acc
+        case ::(head, tail) if occurrence == k => duplicateEachTailRec(tail, head :: acc, 1)
+        case ::(head, _) if occurrence != k => duplicateEachTailRec(remaining, head :: acc, occurrence + 1)
+      }
+    }
+    duplicateEachTailRec(this, RNil, 1).reverse
+  }
 }
 
 object RList {
@@ -245,5 +262,7 @@ object ListProblem extends App {
   val duplicateList = 1 :: 1 :: 1 :: 1 :: 2 :: 3 :: 3 :: 4 :: 4 :: RNil
   println(duplicateList)
   println(duplicateList.rle)
+
+  println(aSmallList.duplicateEach(2))
 
 }
