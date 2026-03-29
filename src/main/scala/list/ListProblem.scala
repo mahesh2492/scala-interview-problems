@@ -176,16 +176,30 @@ case class ::[+T](override val head: T, override val tail: RList[T]) extends RLi
   }
 
 
+  // Complexity - O(N * N)
   override def flatMap[S](f: T => RList[S]): RList[S] = {
     @tailrec
     def flatMapTailRec(remainingList: RList[T], acc: RList[S]): RList[S] = {
       remainingList match {
         case RNil => acc
-        case ::(head, tail) => flatMapTailRec(tail, f(head))
+        case ::(head, tail) => flatMapTailRec(tail, acc ++ f(head))
       }
     }
-    flatMapTailRec(this, RNil)
 
+    @tailrec
+    def betterFlatMap(remaining: RList[T], accumulator: RList[RList[S]]): RList[S] = {
+      if(remaining.isEmpty) concatenateAll(accumulator, RNil, RNil)
+      else betterFlatMap(remaining.tail, f(remaining.head) :: accumulator)
+    }
+
+    @tailrec
+    def concatenateAll(elements: RList[RList[S]], currentList: RList[S], accumulator: RList[S]): RList[S] = {
+      if(currentList.isEmpty && elements.isEmpty) accumulator
+      else if(currentList.isEmpty) concatenateAll(elements.tail, elements.head, accumulator)
+      else concatenateAll(elements, currentList.tail, currentList.head :: accumulator)
+    }
+
+    flatMapTailRec(this, RNil)
   }
 
   override def filter(f: T => Boolean): RList[T] = {
