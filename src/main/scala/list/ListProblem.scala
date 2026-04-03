@@ -46,6 +46,9 @@ sealed abstract class RList[+T] {
 
   // random sample
   def sample(k: Int): RList[T]
+
+  //sorting the list in the order defined by Ordering object
+  def sorted[S >: T](ordering: Ordering[S]): RList[S]
 }
 
 case object RNil extends RList[Nothing] {
@@ -81,6 +84,8 @@ case object RNil extends RList[Nothing] {
   override def rotate(k: Int): RList[Nothing] = RNil
 
   override def sample(k: Int): RList[Nothing] = RNil
+
+  override def sorted[S >: Nothing](ordering: Ordering[S]): RList[S] = RNil
 }
 
 //Renamed Cons to :: as scala original collection
@@ -284,6 +289,31 @@ case class ::[+T](override val head: T, override val tail: RList[T]) extends RLi
    */
   def sampleElegant(k: Int): RList[T] =
     RList.from((1 to k).map(_ => Random.nextInt(this.length)).map(index => this.apply(index)))
+
+  override def sorted[S >: T](ordering: Ordering[S]): RList[S] = {
+    /*
+       insertSorted(4, [], [1, 2, 3, 5])
+       insertSorted(4, [1], [2, 3, 5])
+       insertSorted(4, [2, 1], [3, 5])
+       insertSorted(4, [3, 2, 1], [5])
+       [3, 2, 1].reverse + 4 :: [%]
+     */
+    @tailrec
+    def insertSorted(element: T, before: RList[T], after: RList[T]): RList[T] = {
+      if(after.isEmpty || ordering.lteq(element, after.head)) {
+           before.reverse ++ (element :: after)
+         } else {
+           insertSorted(element, after.head :: before, after.tail)
+         }
+    }
+
+     @tailrec
+     def insertSortTailrec(remaining: RList[T], acc: RList[T]): RList[T] = {
+       if(remaining.isEmpty) acc
+       else insertSortTailrec(remaining.tail, insertSorted(remaining.head, RNil, acc))
+     }
+    insertSortTailrec(this, RNil)
+  }
 }
 
 object RList {
@@ -347,5 +377,15 @@ object ListProblem extends App {
 
   }
 
-  testMediumDifficultyProblem()
+  //testMediumDifficultyProblem()
+
+  def testHardDifficultyProblem() = {
+    val rList = 5 :: 4 :: 3 :: 2 :: 1 :: RNil
+    implicit val ordering = Ordering.fromLessThan[Int](_ < _)
+
+    println(rList.sorted(ordering))
+    println(aLargeList.sample(10).sorted(ordering))
+  }
+
+  testHardDifficultyProblem()
 }
