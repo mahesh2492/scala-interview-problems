@@ -21,8 +21,33 @@ object StringProblems {
     countCharTailrec(s.trim, Map.empty[Char, Int])
   }
 
-  def main(args: Array[String]): Unit = {
+  def testCountCharacter() = {
     println(countCharacters("Scala"))
     println(countCharacters("I love Scala and Functional Programming language because it is awesome."))
+  }
+
+  /*
+     "silent" = "listen"
+     "brag" = "grab"
+   */
+  def checkAnagrams(sa: String, sb: String): Boolean = {
+     val saList = sa.toList
+     sb.forall(saList.contains(_))
+  }
+
+  def checkAnagramsv2(sa: String, sb: String): Boolean = countCharacters(sa) == countCharacters(sb)
+  def checkAnagramsv3(sa: String, sb: String): Boolean = sa.sorted == sb.sorted
+
+
+  def testCheckAnagrams() = {
+    println(checkAnagrams("silent", "listen"))
+    println(checkAnagrams("scala", "haskel"))
+    println(checkAnagramsv2("brag", "grab"))
+    println(checkAnagramsv2("scala", "haskel"))
+    println(checkAnagramsv3("brag", "grab"))
+  }
+  def main(args: Array[String]): Unit = {
+    //testCountCharacter()
+    testCheckAnagrams()
   }
 }
